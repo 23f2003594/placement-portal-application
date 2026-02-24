@@ -131,3 +131,19 @@ def reject(company_id):
     conn.close()
     flash('Company rejected successfully!','warning')
     return True
+
+def applications_filtered(company_id = None , drive_id=None):
+    if not is_admin():
+        return None
+    conn = get_connection()
+    query = "select a.application_id , s.name as student_name , s.roll_no ,c.company_name , p.title as job_title , d.drive_id,a.application_status from application a join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position p on d.position_id = p.position_id where 1=1"
+    params = []
+    if company_id:
+        query += " and c.company_id = ?"
+        params.append(company_id)
+    if drive_id:
+        query += " and d.drive_id = ?"
+        params.append(drive_id)
+    applications = conn.execute(query, tuple(params)).fetchall()
+    conn.close()
+    return applications

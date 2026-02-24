@@ -27,10 +27,12 @@ def student_registration():
         phone = request.form['phone']
         resume_link = request.form['resume_link']
         cgpa = request.form['cgpa']
+        education = request.form['education']
+        skills = request.form['skills']
         graduation_year = request.form['graduation_year']
         conn = get_connection()
         try:
-            conn.execute("insert into student (name, email, password, roll_no ,phone, resume_link, cgpa, graduation_year) values (?,?,?,?,?,?,?,?)",(name,email,hashed_password,roll_no,phone,resume_link,cgpa,graduation_year))
+            conn.execute("insert into student (name, email, password, roll_no ,phone, resume_link, cgpa, education, skills, graduation_year) values (?,?,?,?,?,?,?,?,?,?)",(name,email,hashed_password,roll_no,phone,resume_link,cgpa,education,skills,graduation_year))
             conn.commit()
             conn.close()
             flash('Student has been registered successfully!','success')

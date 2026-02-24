@@ -2,6 +2,7 @@ from flask import Flask , render_template,request,redirect,url_for
 import auth
 import admin
 import company
+import student
 
 app = Flask(__name__)
 
@@ -90,7 +91,68 @@ def update_application_status(application_id,status):
 def student_dashboard():
     if not auth.is_student():
         return "Access denied", 403
-    return render_template("student_dashboard.html")
+    apps = student.view_applications()
+    notifications = [a for a in apps if a["application_status"] != "applied"]
+    return render_template("student_dashboard.html", notifications=notifications)
+
+@app.route("/student/drives")
+def student_drives():
+    if not auth.is_student():
+        return "Access denied", 403
+    drives = student.view_active_drives()
+    return render_template("student_drives.html", drives=drives)
+
+@app.route("/student/search",methods=["GET","POST"])
+def student_search():
+    if not auth.is_student():
+        return "Access denied", 403
+    keyword = request.form["keyword"]
+    drives = student.search_drives(keyword)
+    return render_template("student_drives.html", drives=drives)
+
+@app.route("/student/apply/<int:drive_id>")
+def student_apply(drive_id):
+    result = student.apply_for_drive(drive_id)
+
+    if result == "success":
+        return "applied successfully"
+
+    elif result == "already_applied":
+        return "you have already applied"
+
+    else:
+        return "application failed"
+
+
+@app.route("/student/applications")
+def student_applications():
+    if not auth.is_student():
+        return "Access denied", 403
+    applications = student.view_applications()
+    return render_template("student_applications.html", apps=applications)
+
+@app.route("/student/view_profile")
+def view_profile():
+    if not auth.is_student():
+        return "Access denied", 403
+    profile = student.get_profile()
+    return render_template("student_view_profile.html", profile=profile)
+
+
+
+@app.route("/student/profile", methods=["GET","POST"])
+def student_profile():
+    if not auth.is_student():
+        return "Access denied", 403
+    if request.method == "POST":
+        education = request.form.get("education")
+        skills = request.form.get("skills")
+        resume_link = request.form.get("resume_link")
+        cgpa = request.form.get("cgpa")
+        student.update_profile(education, skills, resume_link, cgpa)
+        return "Profile updated successfully"
+    profile = student.get_profile()
+    return render_template("student_profile.html", profile=profile)
 
 @app.route("/admin/company/approve/<int:company_id>")
 def approve_company(company_id):
@@ -127,8 +189,12 @@ def close_drive(drive_id):
 def admin_applications():
     if not auth.is_admin():
         return "Access denied", 403
-    a=admin.list_applications()
-    return render_template("admin_applications.html", applications=a)
+    company_id = request.args.get('company_id')
+    drive_id = request.args.get('drive_id')
+    a=admin.applications_filtered(company_id=company_id, drive_id=drive_id)
+    companies = admin.list_companies()
+    drives = admin.list_drives()
+    return render_template("admin_applications.html", applications=a,companies=companies, drives=drives)
 
 @app.route("/admin/students")
 def admin_students():
