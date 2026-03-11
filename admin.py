@@ -1,6 +1,7 @@
 import sqlite3
 from flask import redirect , url_for , flash
 from auth import is_admin
+import student
 
 DB_NAME ="placement_portal.db"
 
@@ -29,6 +30,7 @@ def list_students():
 def list_drives():
     if not is_admin():
         return None
+    student.update_drive_status()
     conn = get_connection()
     drives = conn.execute("select d.drive_id , c.company_name , jp.title as job_title ,jp.description,jp.required_skills,jp.experience_required,jp.salary_range,d.eligibility, d.status , d.application_deadline from placement_drive d join company c on d.company_id = c.company_id join job_position jp on d.position_id = jp.position_id").fetchall()
     conn.close()
@@ -38,7 +40,7 @@ def list_applications():
     if not is_admin():
         return None
     conn = get_connection()
-    applications = conn.execute("select a.application_id , s.name as student_name , c.company_name , jp.title as job_title , a.application_status from application a join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position jp on d.position_id = jp.position_id ").fetchall()
+    applications = conn.execute("select s.student_id,a.application_id , s.name as student_name , c.company_name , jp.title as job_title , a.application_status from application a join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position jp on d.position_id = jp.position_id ").fetchall()
     conn.close()
     return applications
 
@@ -136,7 +138,7 @@ def applications_filtered(company_id = None , drive_id=None):
     if not is_admin():
         return None
     conn = get_connection()
-    query = "select a.application_id , s.name as student_name , s.roll_no ,c.company_name , p.title as job_title , d.drive_id,a.application_status from application a join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position p on d.position_id = p.position_id where 1=1"
+    query = "select s.student_id , a.application_id , s.name as student_name , s.roll_no ,c.company_name , p.title as job_title , d.drive_id,a.application_status from application a join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position p on d.position_id = p.position_id where 1=1"
     params = []
     if company_id:
         query += " and c.company_id = ?"
@@ -147,3 +149,21 @@ def applications_filtered(company_id = None , drive_id=None):
     applications = conn.execute(query, tuple(params)).fetchall()
     conn.close()
     return applications
+
+def view_student_profile(student_id):
+    if not is_admin():
+        return None
+
+    conn = get_connection()
+
+    student = conn.execute("select name,roll_no,email,skills,education,resume_link,cgpa from student where student_id=?",(student_id,)).fetchone()
+    conn.close()
+    return student
+
+def placement_report():
+
+    conn = get_connection()
+
+    placements = conn.execute("select s.name,s.roll_no,c.company_name,p.title as job_role,pl.placed_on from placement pl join application a on pl.application_id = a.application_id join student s on a.student_id = s.student_id join placement_drive d on a.drive_id = d.drive_id join company c on d.company_id = c.company_id join job_position p on d.position_id = p.position_id order by pl.placed_on desc ").fetchall()
+    conn.close()
+    return placements

@@ -114,11 +114,17 @@ def student_search():
 def student_apply(drive_id):
     result = student.apply_for_drive(drive_id)
 
-    if result == "success":
+    if result == "applied":
         return "applied successfully"
 
     elif result == "already_applied":
         return "you have already applied"
+    
+    elif result == "drive_not_active":
+        return "This drive is not open for application"
+    
+    elif result == "already_placed":
+        return "You are already placed and cannot apply for other drives"
 
     else:
         return "application failed"
@@ -153,6 +159,22 @@ def student_profile():
         return "Profile updated successfully"
     profile = student.get_profile()
     return render_template("student_profile.html", profile=profile)
+
+@app.route("/student/application_history")
+def application_history():
+    if not auth.is_student():
+        return "Access denied",403
+
+    history = student.view_application_history()
+    return render_template("student_history.html", history=history)
+
+@app.route("/admin/student/<int:student_id>")
+def admin_view_student(student_id):
+    if not auth.is_admin():
+        return "Access denied",403
+
+    profile = admin.view_student_profile(student_id)
+    return render_template("admin_student_profile.html",profile=profile)
 
 @app.route("/admin/company/approve/<int:company_id>")
 def approve_company(company_id):
@@ -241,6 +263,36 @@ def toggle_company_active(company_id):
     if admin.toggle_company_active(company_id):
         return "Company active status toggled"
     return "Access denied", 403
+
+@app.route("/admin/placements")
+def admin_placements():
+    if not auth.is_admin():
+        return "Access denied",403
+    placements = admin.placement_report()
+    return render_template("admin_placements.html",placements=placements)
+
+@app.route("/company/application/<int:application_id>/place", methods=["POST"])
+def place_student(application_id):
+
+    if not auth.is_company():
+        return "Access denied",403
+
+    offer_letter_link = request.form.get("offer_letter_link")
+    remarks = request.form.get("remarks")
+
+    if company.place_student(application_id,offer_letter_link,remarks):
+        return "Student marked as placed"
+
+    return "Operation failed"
+
+@app.route("/company/placements")
+def company_placements():
+
+    if not auth.is_company():
+        return "Access denied",403
+    placements = company.company_placements()
+    return render_template("company_placements.html",placements=placements)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
