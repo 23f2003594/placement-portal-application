@@ -74,12 +74,14 @@
     <h4 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Placement Analytics</h4>
 </div>
 
-<div class="row g-4 mb-5">
+<div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <h6 class="card-title text-muted text-uppercase fw-bold mb-3">Top Recruiting Companies</h6>
-                <canvas id="companyChart" height="250"></canvas>
+                <div style="height: 250px;">
+                    <canvas id="companyChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -88,18 +90,22 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex flex-column align-items-center">
                 <h6 class="card-title text-muted text-uppercase fw-bold mb-3 w-100">Job Role Distribution</h6>
-                <div style="width: 80%;">
-                    <canvas id="roleChart" height="250"></canvas>
+                <div style="height: 250px; width: 80%;">
+                    <canvas id="roleChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
+<div class="row mb-5">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <h6 class="card-title text-muted text-uppercase fw-bold mb-3">Placement Timeline</h6>
-                <canvas id="timelineChart" height="100"></canvas>
+                <div style="height: 180px;">
+                    <canvas id="timelineChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -157,12 +163,12 @@
         // Common Chart Options
         Chart.defaults.font.family = "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
         const colorPalette = [
-            'rgba(13, 110, 253, 0.7)', 'rgba(25, 135, 84, 0.7)', 
-            'rgba(255, 193, 7, 0.7)', 'rgba(220, 53, 69, 0.7)', 
-            'rgba(111, 66, 193, 0.7)', 'rgba(23, 162, 184, 0.7)'
+            'rgba(13, 110, 253, 0.8)', 'rgba(25, 135, 84, 0.8)', 
+            'rgba(255, 193, 7, 0.8)', 'rgba(220, 53, 69, 0.8)', 
+            'rgba(111, 66, 193, 0.8)', 'rgba(23, 162, 184, 0.8)'
         ];
 
-        // --- Chart 1: Horizontal Bar Chart (Companies) ---
+        // --- Chart 1: Vertical Bar Chart (Companies) ---
         new Chart(document.getElementById('companyChart'), {
             type: 'bar',
             data: {
@@ -171,15 +177,18 @@
                     label: 'Students Placed',
                     data: Object.values(companyCounts),
                     backgroundColor: colorPalette[0],
-                    borderRadius: 4
+                    borderRadius: 4,
+                    barPercentage: 0.6 // Makes bars slightly thinner for a cleaner look
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                scales: { 
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } } // Removes vertical grid lines
+                }
             }
         });
 
@@ -202,7 +211,7 @@
             }
         });
 
-        // --- Chart 3: Area/Line Chart (Timeline) ---
+        // --- Chart 3: Simple Plot Chart (Timeline) ---
         const sortedDates = Object.keys(dateCounts).sort();
         const timelineData = sortedDates.map(date => dateCounts[date]);
 
@@ -213,22 +222,26 @@
                 datasets: [{
                     label: 'Offers Accepted',
                     data: timelineData,
-                    borderColor: 'rgba(25, 135, 84, 1)',
-                    backgroundColor: 'rgba(25, 135, 84, 0.2)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: 'rgba(25, 135, 84, 1)',
-                    pointRadius: 4
+                    borderColor: 'rgba(111, 66, 193, 1)', // Purple line
+                    borderWidth: 2,
+                    fill: false, // Removed the colored area fill under the line
+                    tension: 0.1, // Reduced curve for a more direct plot look
+                    pointBackgroundColor: 'rgba(111, 66, 193, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                scales: { 
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } } // Removes vertical grid lines
+                }
             }
         });
     });
 </script>
+
 {% endblock %}
